@@ -11,7 +11,8 @@ fn main() {
         .iter()
         .position(|x| x == "--directory")
         .and_then(|i| args.get(i + 1))
-        .expect("--directory argument required");
+        .map(|s| s.to_string())
+        .unwrap_or_else(|| ".".to_string());
 
     // You can use print statements as follows for debugging, they'll be visible when running tests.
     println!("Logs from your program will appear here!");
