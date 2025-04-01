@@ -42,14 +42,27 @@ fn handle_connection(mut stream: std::net::TcpStream, directory: &str) {
     let path = first_line.split_whitespace().nth(1).unwrap_or("");
     let request_type = first_line.split_whitespace().next().unwrap_or("");
 
-    if request_type == "POST" {
-        if path.starts_with("/files/") {
-            let file_name = &path[7..];
-            let file_path = Path::new(directory).join(file_name);
-            let mut file = File::create(file_path).unwrap();
-            file.write_all(&buffer[..]).unwrap();
-            let response = "HTTP/1.1 201 Created\r\n\r\n";
-            stream.write_all(response.as_bytes()).unwrap();
+    if request_type == "POST" && path.starts_with("/files/") {
+        let file_name = &path[7..];
+        let file_path = Path::new(directory).join(file_name);
+
+        if let Some(body_start) = request.find("\r\n\r\n") {
+            let body_start = body_start + 4;
+            let body = &buffer[body_start..];
+
+            if let Some(len_line) = request
+                .lines()
+                .find(|line| line.starts_with("Content-Length: "))
+            {
+                if let Ok(content_length) = len_line[16..].parse::<usize>() {
+                    let mut file = File::create(file_path).unwrap();
+                    file.write_all(&body[..content_length]).unwrap();
+
+                    let response = "HTTP/1.1 201 Created\r\n\r\n";
+                    stream.write_all(response.as_bytes()).unwrap();
+                    return;
+                }
+            }
         }
     }
 
