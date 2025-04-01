@@ -70,13 +70,14 @@ fn handle_connection(mut stream: std::net::TcpStream, directory: &str) {
         String::from("HTTP/1.1 200 OK\r\n\r\n")
     } else if path.starts_with("/echo/") {
         let body = &path[6..];
+
         let accept_encoding = request
             .lines()
             .find(|line| line.starts_with("Accept-Encoding: "))
             .map(|line| &line[16..])
             .unwrap_or("identity");
-
-        if accept_encoding.contains("gzip") {
+        let accept_encoding = accept_encoding.split(",").collect::<Vec<&str>>();
+        if accept_encoding.contains(&"gzip") {
             format!(
                 "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {}\r\nContent-Encoding: gzip\r\n\r\n{}",
                 body.len(),
