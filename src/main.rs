@@ -1,4 +1,5 @@
 use std::env;
+use std::fs::File;
 #[allow(unused_imports)]
 use std::io::{Read, Write};
 use std::net::TcpListener;
@@ -39,6 +40,18 @@ fn handle_connection(mut stream: std::net::TcpStream, directory: &str) {
     let request = String::from_utf8_lossy(&buffer);
     let first_line = request.lines().next().unwrap_or("");
     let path = first_line.split_whitespace().nth(1).unwrap_or("");
+    let request_type = first_line.split_whitespace().next().unwrap_or("");
+
+    if request_type == "POST" {
+        if path.starts_with("/files/") {
+            let file_name = &path[7..];
+            let file_path = Path::new(directory).join(file_name);
+            let mut file = File::create(file_path).unwrap();
+            file.write_all(&buffer[..]).unwrap();
+            let response = "HTTP/1.1 201 Created\r\n\r\n";
+            stream.write_all(response.as_bytes()).unwrap();
+        }
+    }
 
     let response = if path == "/" {
         String::from("HTTP/1.1 200 OK\r\n\r\n")
