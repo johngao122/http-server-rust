@@ -1,3 +1,5 @@
+use flate2::write::GzEncoder;
+use flate2::Compression;
 use std::env;
 use std::fs::File;
 #[allow(unused_imports)]
@@ -5,6 +7,12 @@ use std::io::{Read, Write};
 use std::net::TcpListener;
 use std::path::Path;
 use std::thread;
+
+fn compress_string(s: &str) -> Vec<u8> {
+    let mut encoder = GzEncoder::new(Vec::new(), Compression::default());
+    encoder.write_all(s.as_bytes()).unwrap();
+    encoder.finish().unwrap()
+}
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -79,11 +87,11 @@ fn handle_connection(mut stream: std::net::TcpStream, directory: &str) {
         let supports_gzip = accept_encoding.split(',').any(|enc| enc.trim() == "gzip");
 
         if supports_gzip {
+            let compressed = compress_string(body);
             format!(
-                "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {}\r\nContent-Encoding: gzip\r\n\r\n{}",
-                body.len(),
-                body
-            )
+                "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {}\r\nContent-Encoding: gzip\r\n\r\n",
+                compressed.len()
+            ) + &String::from_utf8_lossy(&compressed)
         } else {
             format!(
                 "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {}\r\n\r\n{}",
