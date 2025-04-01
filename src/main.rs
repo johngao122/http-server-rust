@@ -21,7 +21,7 @@ fn main() {
                 let response = if path == "/" {
                     String::from("HTTP/1.1 200 OK\r\n\r\n")
                 } else if path.starts_with("/echo/") {
-                    let body = path.split_whitespace().nth(1).unwrap_or("");
+                    let body = &path[6..];
                     format!(
                         "HTTP/1.1 200 OK\r\nContent-Length: {}\r\nContent-Type: text/plain\r\n\r\n{}",
                         body.len(),
