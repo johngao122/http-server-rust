@@ -88,10 +88,13 @@ fn handle_connection(mut stream: std::net::TcpStream, directory: &str) {
 
         if supports_gzip {
             let compressed = compress_string(body);
-            format!(
+            let headers = format!(
                 "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {}\r\nContent-Encoding: gzip\r\n\r\n",
                 compressed.len()
-            ) + &String::from_utf8_lossy(&compressed)
+            );
+            stream.write_all(headers.as_bytes()).unwrap();
+            stream.write_all(&compressed).unwrap();
+            return;
         } else {
             format!(
                 "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {}\r\n\r\n{}",
