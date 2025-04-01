@@ -27,10 +27,13 @@ fn main() {
                         body.len(),
                         body
                     )
+                } else if path.starts_with("/user-agent") {
+                    let user_agent = request.split_whitespace().nth(1).unwrap_or("Unknown");
+                    format!("HTTP/1.1 200 OK\r\nContent-Length: {}\r\nContent-Type: text/plain\r\n\r\n{}",
+                    user_agent.len(), user_agent)
                 } else {
                     String::from("HTTP/1.1 404 Not Found\r\n\r\n")
                 };
-
                 stream.write_all(response.as_bytes()).unwrap();
             }
             Err(e) => {
