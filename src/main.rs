@@ -23,7 +23,7 @@ fn main() {
                 } else if path.starts_with("/echo/") {
                     let body = path.split_whitespace().nth(1).unwrap_or("");
                     format!(
-                        "HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{}",
+                        "HTTP/1.1 200 OK\r\nContent-Length: {}\r\nContent-Type: text/plain\r\n\r\n{}",
                         body.len(),
                         body
                     )
