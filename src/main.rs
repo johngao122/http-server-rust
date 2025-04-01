@@ -1,9 +1,18 @@
+use std::env;
 #[allow(unused_imports)]
 use std::io::{Read, Write};
 use std::net::TcpListener;
+use std::path::Path;
 use std::thread;
 
 fn main() {
+    let args: Vec<String> = env::args().collect();
+    let directory = args
+        .iter()
+        .position(|x| x == "--directory")
+        .and_then(|i| args.get(i + 1))
+        .expect("--directory argument required");
+
     // You can use print statements as follows for debugging, they'll be visible when running tests.
     println!("Logs from your program will appear here!");
 
@@ -12,7 +21,8 @@ fn main() {
     for stream in listener.incoming() {
         match stream {
             Ok(stream) => {
-                thread::spawn(move || handle_connection(stream));
+                let directory = directory.clone();
+                thread::spawn(move || handle_connection(stream, &directory));
             }
             Err(e) => {
                 println!("error: {}", e);
@@ -21,7 +31,7 @@ fn main() {
     }
 }
 
-fn handle_connection(mut stream: std::net::TcpStream) {
+fn handle_connection(mut stream: std::net::TcpStream, directory: &str) {
     let mut buffer = [0; 1024];
     stream.read(&mut buffer).unwrap();
 
@@ -50,10 +60,11 @@ fn handle_connection(mut stream: std::net::TcpStream) {
             user_agent
         )
     } else if path.starts_with("/files/") {
-        let file_path = &path[7..];
+        let file_name = &path[7..];
+        let file_path = Path::new(directory).join(file_name);
         match std::fs::read(file_path) {
             Ok(content) => format!(
-                "HTTP/1.1 200 OK\r\nContent-Length: {}\r\nContent-Type: application/octet-stream\r\n\r\n{}",
+                "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: {}\r\n\r\n{}",
                 content.len(),
                 String::from_utf8_lossy(&content)
             ),
