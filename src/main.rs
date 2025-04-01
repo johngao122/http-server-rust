@@ -49,8 +49,17 @@ fn handle_connection(mut stream: std::net::TcpStream) {
             user_agent.len(),
             user_agent
         )
+    } else if path.starts_with("/files/") {
+        let file_path = &path[7..];
+        match std::fs::read(file_path) {
+            Ok(content) => format!(
+                "HTTP/1.1 200 OK\r\nContent-Length: {}\r\nContent-Type: application/octet-stream\r\n\r\n{}",
+                content.len(),
+                String::from_utf8_lossy(&content)
+            ),
+            Err(_) => String::from("HTTP/1.1 404 Not Found\r\n\r\n")
+        }
     } else {
         String::from("HTTP/1.1 404 Not Found\r\n\r\n")
     };
-    stream.write_all(response.as_bytes()).unwrap();
 }
