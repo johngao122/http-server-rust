@@ -19,9 +19,16 @@ fn main() {
                 let path = first_line.split_whitespace().nth(1).unwrap_or("");
 
                 let response = if path == "/" {
-                    "HTTP/1.1 200 OK\r\n\r\n"
+                    String::from("HTTP/1.1 200 OK\r\n\r\n")
+                } else if path == "/echo" {
+                    let body = request.split_whitespace().nth(1).unwrap_or("");
+                    format!(
+                        "HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{}",
+                        body.len(),
+                        body
+                    )
                 } else {
-                    "HTTP/1.1 404 Not Found\r\n\r\n"
+                    String::from("HTTP/1.1 404 Not Found\r\n\r\n")
                 };
 
                 stream.write_all(response.as_bytes()).unwrap();
