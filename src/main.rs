@@ -97,6 +97,26 @@ fn handle_connection(mut stream: std::net::TcpStream, directory: &str) {
             ),
             Err(_) => String::from("HTTP/1.1 404 Not Found\r\n\r\n")
         }
+    } else if path.starts_with("/echo/") {
+        //get the headers
+        let headers = request
+            .lines()
+            .filter(|line| !line.is_empty())
+            .map(|line| line.split_whitespace().next().unwrap_or(""))
+            .collect::<Vec<&str>>();
+        //Grab the Accept-Encoding from the headers
+        let accept_encoding = headers
+            .iter()
+            .find(|header| header.starts_with("Accept-Encoding: "))
+            .map(|header| &header[16..])
+            .unwrap_or("identity");
+        //get the body
+        if accept_encoding == "gzip" {
+            "HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\nContent-Type: text/plain\r\n\r\n"
+                .to_string()
+        } else {
+            "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\n".to_string()
+        }
     } else {
         String::from("HTTP/1.1 404 Not Found\r\n\r\n")
     };
